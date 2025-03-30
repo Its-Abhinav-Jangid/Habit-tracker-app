@@ -7,13 +7,14 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
+import DataForm from "./components/testForm";
 
 import axios from "axios";
 import { getAuthCookies } from "./lib/getAuthCookies";
 export default async function Home() {
   try {
-    const result = await axios.delete(
-      `${process.env.API_BASE_URL}/api/habits/16`,
+    const result = await axios.get(
+      `${process.env.API_BASE_URL}/api/habits/`,
       // {
       //   name: "Read books",
       //   description: "Read everyday 5 mins",
@@ -25,6 +26,7 @@ export default async function Home() {
         },
       }
     );
+    // console.log(result.data);
   } catch (error) {
     console.error(error.message);
   }
@@ -36,6 +38,7 @@ export default async function Home() {
           <UserButton />
           <SignInButton />
         </ClerkProvider>
+        <DataForm />
         <Image
           className="dark:invert"
           src="/next.svg"

@@ -3,23 +3,23 @@ import { getAuth } from "@clerk/nextjs/server";
 
 const prisma = new PrismaClient();
 
-export async function DELETE(req, { params }) {
-  const { id } = await params;
+export async function GET(req, { params }) {
   const { userId } = getAuth(req);
+
   if (!userId) {
     return new Response("Please login and try again", { status: 401 });
   }
+  const { id } = await params;
   try {
-    const deletedHabit = await prisma.habit.delete({
+    const record = await prisma.habitRecord.findUnique({
       where: {
         id: parseInt(id),
         userId: userId,
       },
     });
-    return new Response(
-      JSON.stringify({ msg: "habit deleted", deletedHabit: deletedHabit })
-    );
+    return new Response(JSON.stringify(record));
   } catch (error) {
+    console.error(error);
     if (error.code === "P2025") {
       return new Response(
         JSON.stringify({ error: "Habit not found or unauthorized" }),
@@ -35,29 +35,32 @@ export async function DELETE(req, { params }) {
     );
   }
 }
-export async function GET(req, { params }) {
-  let { id } = await params;
-  id = parseInt(id);
-  const { userId } = getAuth(req);
 
+export async function DELETE(req, { params }) {
+  const { id } = await params;
+  const { userId } = getAuth(req);
   if (!userId) {
     return new Response("Please login and try again", { status: 401 });
   }
   try {
-    const habit = await prisma.habit.findFirst({
+    const deletedRecord = await prisma.habitRecord.delete({
       where: {
+        id: parseInt(id),
         userId: userId,
-        id: id,
       },
     });
-    if (!habit) {
-      return new Response("Habit not found or unauthorized", {
-        status: 404,
-      });
-    }
-    return new Response(JSON.stringify(habit));
+    return new Response(
+      JSON.stringify({ msg: "record deleted", deletedRecord: deletedRecord })
+    );
   } catch (error) {
-    console.error(error);
+    if (error.code === "P2025") {
+      return new Response(
+        JSON.stringify({ error: "Record not found or unauthorized" }),
+        {
+          status: 404,
+        }
+      );
+    }
     return new Response(
       JSON.stringify("Some error occured", {
         status: 500,
@@ -68,26 +71,27 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   const { userId } = getAuth(req);
-  let { id } = await params;
-  id = parseInt(id);
-  const data = await req.json();
+
   if (!userId) {
     return new Response("Please login and try again", { status: 401 });
   }
+
+  const { id } = await params;
+  const data = await req.json();
   try {
-    const updatedHabit = await prisma.habit.update({
+    const updatedRecord = await prisma.habitRecord.update({
       data: {
-        name: data.name,
-        description: data.description,
-        dailyGoal: parseInt(data.dailyGoal) || 100,
+        goalReachedPercent: parseInt(data.goalReachedPercent),
+        notes: data.notes,
+        date: data.date,
       },
       where: {
-        id: id,
+        id: parseInt(id),
         userId: userId,
       },
     });
     return new Response(
-      JSON.stringify({ msg: "Habit updated", habit: updatedHabit })
+      JSON.stringify({ msg: "Record updated", habit: updatedRecord })
     );
   } catch (error) {
     if (error.code === "P2025") {
