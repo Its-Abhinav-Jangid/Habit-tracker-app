@@ -8,10 +8,55 @@ export async function GET(req) {
   if (!userId) {
     return new Response("Please login and try again", { status: 401 });
   }
+  const { searchParams } = new URL(req.url);
+  const query = {
+    userId: userId,
+  };
+  const startDate = searchParams.get("startDate");
+  const endDate = searchParams.get("endDate");
+  const minGoalReached = searchParams.get("minGoalReached");
+  const maxGoalReached = searchParams.get("maxGoalReached");
+  if (startDate && endDate) {
+    query["date"] = {
+      gte: new Date(startDate),
+      lte: new Date(endDate),
+    };
+  } else if (startDate || endDate) {
+    if (startDate) {
+      query["date"] = {
+        gte: new Date(startDate),
+      };
+    }
+    if (endDate) {
+      query["date"] = {
+        lte: new Date(endDate),
+      };
+    }
+  }
+
+  if (minGoalReached && maxGoalReached) {
+    query["goalReachedPercent"] = {
+      gte: parseFloat(minGoalReached),
+      lte: parseFloat(maxGoalReached),
+    };
+  } else if (minGoalReached || maxGoalReached) {
+    if (minGoalReached) {
+      query["goalReachedPercent"] = {
+        gte: parseFloat(minGoalReached),
+      };
+    }
+    if (maxGoalReached) {
+      query["goalReachedPercent"] = {
+        lte: parseFloat(maxGoalReached),
+      };
+    }
+  }
+
   try {
     const records = await prisma.habitRecord.findMany({
-      where: {
-        userId: userId,
+      where: query,
+      orderBy: {
+        date: "desc",
       },
     });
     return new Response(JSON.stringify(records));

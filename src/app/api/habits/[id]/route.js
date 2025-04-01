@@ -94,7 +94,7 @@ export async function PUT(req, { params }) {
       return new Response(
         JSON.stringify({ error: "Habit not found or unauthorized" }),
         {
-          status: 401,
+          status: 404,
         }
       );
     }

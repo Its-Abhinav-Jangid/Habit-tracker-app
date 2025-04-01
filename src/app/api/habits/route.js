@@ -8,10 +8,35 @@ export async function GET(req) {
   if (!userId) {
     return new Response("Please login and try again", { status: 401 });
   }
+  const query = {
+    userId: userId,
+  };
+  const { searchParams } = new URL(req.url);
+  const startDate = searchParams.get("startDate");
+  const endDate = searchParams.get("endDate");
+
+  if (startDate && endDate) {
+    query["createdAt"] = {
+      gte: new Date(startDate),
+      lte: new Date(endDate),
+    };
+  } else if (startDate || endDate) {
+    if (startDate) {
+      query["createdAt"] = {
+        gte: new Date(startDate),
+      };
+    }
+    if (endDate) {
+      query["createdAt"] = {
+        lte: new Date(endDate),
+      };
+    }
+  }
 
   const habits = await prisma.habit.findMany({
-    where: {
-      userId: userId,
+    where: query,
+    orderBy: {
+      createdAt: "desc",
     },
   });
 
